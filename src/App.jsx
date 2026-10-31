@@ -4,19 +4,20 @@ import MachineCard from './components/MachineCard'
 import ATM from './machines/ATM'
 import TicketMachine from './machines/TicketMachine'
 import FoodMachine from './machines/FoodMachine'
+import { ensureVoicesLoaded, speakSpeechPayload, stopAllSpeech } from './speech'
 import './App.css'
 
 const PRACTICE_MACHINES = [
   {
     id: 'atm',
-    icon: '🏧',
-    badge: 'Banking Kiosk • بینک اے ٹی ایم',
+    icon: 'atm',
+    image: '/images/atm.jpg',
     title: 'ATM Practice',
     titleUrdu: 'اے ٹی ایم کی مشق',
     description:
-      'Learn how to check your balance or withdraw fictional cash safely. Practice selecting amounts, reviewing your screen, and taking your card back — without ever entering a real card number or PIN.',
+      'Check a pretend balance or take out pretend cash. No real card and no PIN.',
     descriptionUrdu:
-      'بغیر کسی اصلی کارڈ یا پن کے، محفوظ طریقے سے بیلنس چیک کرنے اور فرضی رقم نکالنے کی مشق کریں۔',
+      'فرضی بیلنس دیکھیں یا فرضی رقم نکالیں۔ اصلی کارڈ یا پن کی ضرورت نہیں۔',
     skills: [
       {
         en: 'Choose Cash Withdrawal or Balance Inquiry',
@@ -34,14 +35,14 @@ const PRACTICE_MACHINES = [
   },
   {
     id: 'ticket',
-    icon: '🎫',
-    badge: 'Travel Kiosk • سفری ٹکٹ مشین',
+    icon: 'ticket',
+    image: '/images/ticket.jpg',
     title: 'Ticket Booking Practice',
     titleUrdu: 'ٹکٹ بکنگ کی مشق',
     description:
-      'Practice buying train or bus tickets on a station touchscreen. Choose your departure and destination cities, select Senior or Economy fares, adjust passenger counts, and edit any detail before printing.',
+      'Choose cities, a ticket type, and how many people are travelling. You can change any answer before you finish.',
     descriptionUrdu:
-      'ریلوے یا بس اسٹیشن کی ٹچ اسکرین پر روانگی اور منزل کا شہر، ٹکٹ کی قسم اور مسافروں کی تعداد منتخب کرنے کی مشق کریں۔',
+      'شہر، ٹکٹ کی قسم اور مسافروں کی تعداد منتخب کریں۔ ختم کرنے سے پہلے کوئی بھی جواب بدل سکتے ہیں۔',
     skills: [
       {
         en: 'Pick Departure and Destination cities in order',
@@ -59,14 +60,14 @@ const PRACTICE_MACHINES = [
   },
   {
     id: 'food',
-    icon: '🍔',
-    badge: 'Restaurant Kiosk • ریستوران آرڈر مشین',
+    icon: 'food',
+    image: '/images/food.jpg',
     title: 'Food Ordering Practice',
     titleUrdu: 'کھانا آرڈر کرنے کی مشق',
     description:
-      'Practice ordering meals and drinks on a self-service restaurant screen. Browse menu categories, add items to your tray, change quantities, remove accidental items, and get your pickup number.',
+      'Choose a meal, change how many you want, remove a mistake, and get a pickup number.',
     descriptionUrdu:
-      'ریستوران کی سیلف سروس اسکرین پر مینو دیکھنا، کھانا شامل کرنا، تعداد بدلنا اور غلط آئٹم ہٹانا سیکھیں۔',
+      'کھانا منتخب کریں، تعداد بدلیں، غلط چیز ہٹائیں، اور اپنا نمبر لیں۔',
     skills: [
       {
         en: 'Choose Eat In (Dine Here) or Takeaway (Parcel)',
@@ -84,80 +85,134 @@ const PRACTICE_MACHINES = [
   },
 ]
 
-const HOME_SPEECH_TEXT =
-  'Welcome to Kiosk of Confidence. Practice first. Use technology independently. This is a safe practice website with three touchscreen simulators: ATM Practice, Ticket Booking Practice, and Food Ordering Practice. Touch any Start Practice button to begin.'
+const HOME_SPEECH = {
+  en: 'Welcome to Kiosk of Confidence. Practice first. Use technology independently. This is a safe practice website with three touchscreen simulators: ATM Practice, Ticket Booking Practice, and Food Ordering Practice. Touch any Start button to begin.',
+  ur: 'اعتماد کے کیوسک میں خوش آمدید۔ پہلے مشق کریں۔ پھر خود اعتمادی کے ساتھ ٹیکنالوجی استعمال کریں۔ یہاں تین محفوظ مشقیں ہیں: اے ٹی ایم، ٹکٹ بکنگ، اور کھانا آرڈر۔ شروع کرنے کے لیے سبز بٹن دبائیں۔',
+  urAudio: 'home',
+}
 
 export default function App() {
   const [activeMachine, setActiveMachine] = useState('home') // 'home' | 'atm' | 'ticket' | 'food'
   const [learningMode, setLearningMode] = useState('practice') // 'learn' | 'practice' | 'independent'
-  const [language, setLanguage] = useState('both') // 'both' | 'en' | 'ur'
+  const [language, setLanguage] = useState('en') // 'en' | 'ur'
   const [largeText, setLargeText] = useState(false)
   const [isHelpOpen, setIsHelpOpen] = useState(false)
-  const [currentScreenSpeech, setCurrentScreenSpeech] = useState(HOME_SPEECH_TEXT)
+  const [currentScreenSpeech, setCurrentScreenSpeech] = useState(HOME_SPEECH)
   const [isSpeaking, setIsSpeaking] = useState(false)
   const [ttsNotice, setTtsNotice] = useState('')
+  const [menuOpen, setMenuOpen] = useState(false)
 
   const ttsSupported =
     typeof window !== 'undefined' && 'speechSynthesis' in window
 
-  const showEnglish = language === 'both' || language === 'en'
-  const showUrdu = language === 'both' || language === 'ur'
+  const showEnglish = language === 'en'
+  const showUrdu = language === 'ur'
+  const inSimulation = activeMachine !== 'home'
 
   const stopSpeech = useCallback(() => {
-    if (ttsSupported) {
-      window.speechSynthesis.cancel()
-    }
+    stopAllSpeech()
     setIsSpeaking(false)
-  }, [ttsSupported])
+  }, [])
 
   const speakText = useCallback(
-    (textToSpeak) => {
-      if (!ttsSupported) {
+    async (textToSpeak) => {
+      const speakingNow =
+        isSpeaking ||
+        (ttsSupported &&
+          (window.speechSynthesis.speaking || window.speechSynthesis.pending))
+
+      if (speakingNow) {
+        stopSpeech()
+        return
+      }
+
+      if (!ttsSupported && language !== 'ur') {
         setTtsNotice(
           'Audio speech (Text-to-Speech) is not available in this browser, but all written guides are shown clearly on screen.'
         )
         return
       }
-      if (window.speechSynthesis.speaking) {
-        window.speechSynthesis.cancel()
+
+      setTtsNotice('')
+      setIsSpeaking(true)
+      const result = await speakSpeechPayload(textToSpeak || currentScreenSpeech, language, {
+        onEnd: () => setIsSpeaking(false),
+        onError: () => setIsSpeaking(false),
+      })
+
+      if (!result.ok) {
         setIsSpeaking(false)
+        if (result.reason === 'empty' || result.reason === 'missing-audio') {
+          setTtsNotice(
+            language === 'ur'
+              ? 'Urdu audio for this screen is not ready yet. Written Urdu stays on screen.'
+              : 'No spoken text is available for this screen yet.'
+          )
+        } else if (result.reason === 'error') {
+          setTtsNotice(
+            language === 'ur'
+              ? 'Urdu audio could not play. Check your speaker, then try Listen again.'
+              : 'Speech could not play on this device. Written instructions stay on screen.'
+          )
+        }
         return
       }
-      setTtsNotice('')
-      const utterance = new SpeechSynthesisUtterance(textToSpeak || currentScreenSpeech)
-      utterance.rate = 0.92 // Slightly slower, clearer pace for older adults
-      utterance.onend = () => setIsSpeaking(false)
-      utterance.onerror = () => setIsSpeaking(false)
-      setIsSpeaking(true)
-      window.speechSynthesis.speak(utterance)
     },
-    [ttsSupported, currentScreenSpeech]
+    [ttsSupported, currentScreenSpeech, language, isSpeaking, stopSpeech]
   )
 
   useEffect(() => {
+    if (ttsSupported) {
+      ensureVoicesLoaded()
+    }
     return () => {
-      if (ttsSupported) {
-        window.speechSynthesis.cancel()
-      }
+      stopAllSpeech()
     }
   }, [ttsSupported])
 
+  useEffect(() => {
+    // Stop current audio when the listener switches language, so the next Listen uses the new choice.
+    stopSpeech()
+  }, [language, stopSpeech])
+
+  useEffect(() => {
+    document.documentElement.style.fontSize = largeText ? '22px' : '19px'
+    return () => {
+      document.documentElement.style.fontSize = ''
+    }
+  }, [largeText])
+
   const handleGoHome = () => {
     stopSpeech()
+    setMenuOpen(false)
     setActiveMachine('home')
-    setCurrentScreenSpeech(HOME_SPEECH_TEXT)
+    setCurrentScreenSpeech(HOME_SPEECH)
     window.scrollTo({ top: 0, behavior: 'smooth' })
   }
 
   const handleStartMachine = (machineId, mode = 'practice') => {
     stopSpeech()
+    setMenuOpen(false)
     setLearningMode(mode)
     setActiveMachine(machineId)
     window.scrollTo({ top: 0, behavior: 'smooth' })
   }
 
+  useEffect(() => {
+    if (!menuOpen) return undefined
+    const previous = document.body.style.overflow
+    document.body.style.overflow = 'hidden'
+    return () => {
+      document.body.style.overflow = previous
+    }
+  }, [menuOpen])
+
   return (
-    <div className={`app-shell ${largeText ? 'extra-large-text' : ''}`}>
+    <div
+      className={`app-shell ${largeText ? 'extra-large-text' : ''} ${
+        inSimulation ? 'sim-layout' : 'home-layout'
+      }`}
+    >
       <Header
         activeMachine={activeMachine}
         onGoHome={handleGoHome}
@@ -172,89 +227,79 @@ export default function App() {
         onSpeakCurrentScreen={() => speakText(currentScreenSpeech)}
         isSpeaking={isSpeaking}
         ttsSupported={ttsSupported}
+        menuOpen={menuOpen}
+        onToggleMenu={() => setMenuOpen((prev) => !prev)}
+        onCloseMenu={() => setMenuOpen(false)}
       />
 
+      <div className="app-content">
       {ttsNotice && (
         <div className="tts-notice-banner" role="status">
-          <span>ℹ️ {ttsNotice}</span>
+          <span>Notice: {ttsNotice}</span>
           <button type="button" onClick={() => setTtsNotice('')}>
             Dismiss
           </button>
         </div>
       )}
 
-      <main className="main-container">
+      <main className={`main-container machine-theme-${activeMachine}`}>
         {/* HOME PAGE */}
         {activeMachine === 'home' && (
           <div className="home-view">
-            {/* Hero Section */}
             <section className="hero-banner" aria-labelledby="hero-title">
-              <div className="hero-badge-row">
-                <span className="hero-pill">
-                  🌱 Beginner-Friendly Touchscreen Practice
-                </span>
-                <span className="hero-pill" lang="ur" dir="rtl">
-                  بزرگوں اور نئے سیکھنے والوں کے لیے آسان مشق
-                </span>
+              <div className="hero-photo-wrap">
+                <img
+                  src="/images/home-hero.jpg?v=3"
+                  alt="Older adults practising an ATM, train ticket registration, and food ordering screens"
+                  className="hero-photo"
+                />
               </div>
 
-              <h1 id="hero-title" className="hero-title">
-                Kiosk of Confidence
-              </h1>
+              <div className="hero-copy">
+                <p className="hero-kicker">Practice first. No real money.</p>
+                <h1 id="hero-title" className="hero-title">
+                  Choose a machine
+                </h1>
+                <p className="hero-short">Tap the green Start button.</p>
+                {showUrdu && (
+                  <p className="hero-short-urdu" lang="ur" dir="rtl">
+                    سبز بٹن دبائیں۔
+                  </p>
+                )}
+                {showEnglish && (
+                  <p className="hero-explanation">
+                    This is a safe place to learn an ATM, a ticket machine, and a food-order screen. Take your time. You can always go back.
+                  </p>
+                )}
+                {showUrdu && (
+                  <p className="hero-explanation-urdu" lang="ur" dir="rtl">
+                    یہاں اے ٹی ایم، ٹکٹ مشین اور کھانے کے آرڈر کی محفوظ مشق کریں۔ جلدی نہیں۔ آپ ہمیشہ واپس جا سکتے ہیں۔
+                  </p>
+                )}
 
-              {showEnglish && (
-                <p className="hero-tagline">
-                  Practice first. Use technology independently.
-                </p>
-              )}
-              {showUrdu && (
-                <p className="hero-tagline-urdu" lang="ur" dir="rtl">
-                  پہلے مشق کریں۔ پھر خود اعتمادی کے ساتھ ٹیکنالوجی استعمال کریں۔
-                </p>
-              )}
-
-              {showEnglish && (
-                <p className="hero-explanation">
-                  Feeling nervous in front of an ATM, train ticket kiosk, or fast-food touchscreen is completely normal. Here, you can practice at your own pace in a <strong>100% safe simulation</strong>. No real money, no bank cards, and no personal details are ever used — and making mistakes is the best way to learn!
-                </p>
-              )}
-              {showUrdu && (
-                <p className="hero-explanation-urdu" lang="ur" dir="rtl">
-                  اے ٹی ایم، ٹکٹ مشین یا ریستوران کی ٹچ اسکرین استعمال کرتے وقت جھجھک محسوس کرنا ایک عام بات ہے۔ یہاں آپ بغیر کسی ڈر کے اپنی رفتار سے مشق کر سکتے ہیں۔ اس ویب سائٹ پر کوئی اصلی پیسہ یا ذاتی معلومات استعمال نہیں ہوتیں — اور غلطی کر کے اسے سدھارنا ہی سیکھنے کا بہترین طریقہ ہے!
-                </p>
-              )}
-
-              {/* User Journey Visual Steps */}
-              <div className="journey-strip" aria-label="How your practice journey works">
-                <div className="journey-step">
-                  <span className="journey-num">1</span>
-                  <span>Select Machine</span>
-                  {showUrdu && <small lang="ur">مشین منتخب کریں</small>}
-                </div>
-                <span className="journey-arrow" aria-hidden="true">➔</span>
-                <div className="journey-step">
-                  <span className="journey-num">2</span>
-                  <span>Learn</span>
-                  {showUrdu && <small lang="ur">سمجھیں</small>}
-                </div>
-                <span className="journey-arrow" aria-hidden="true">➔</span>
-                <div className="journey-step">
-                  <span className="journey-num">3</span>
-                  <span>Practise</span>
-                  {showUrdu && <small lang="ur">مشق کریں</small>}
-                </div>
-                <span className="journey-arrow" aria-hidden="true">➔</span>
-                <div className="journey-step highlight">
-                  <span className="journey-num">4</span>
-                  <span>Make & Fix a Mistake</span>
-                  {showUrdu && <small lang="ur">غلطی درست کریں</small>}
-                </div>
-                <span className="journey-arrow" aria-hidden="true">➔</span>
-                <div className="journey-step">
-                  <span className="journey-num">5</span>
-                  <span>Complete Task!</span>
-                  {showUrdu && <small lang="ur">مکمل کریں</small>}
-                </div>
+                <ol className="journey-strip" aria-label="How practice works">
+                  <li className="journey-step">
+                    <span className="journey-num">1</span>
+                    <span>
+                      Pick a machine
+                      {showUrdu && <small lang="ur" dir="rtl">مشین چنیں</small>}
+                    </span>
+                  </li>
+                  <li className="journey-step">
+                    <span className="journey-num">2</span>
+                    <span>
+                      Press the big button
+                      {showUrdu && <small lang="ur" dir="rtl">بڑا بٹن دبائیں</small>}
+                    </span>
+                  </li>
+                  <li className="journey-step">
+                    <span className="journey-num">3</span>
+                    <span>
+                      Finish, then try again
+                      {showUrdu && <small lang="ur" dir="rtl">مکمل کریں، پھر دہرائیں</small>}
+                    </span>
+                  </li>
+                </ol>
               </div>
             </section>
 
@@ -262,18 +307,18 @@ export default function App() {
             {isHelpOpen && (
               <section className="home-help-box" aria-label="How to use Kiosk of Confidence">
                 <div className="home-help-header">
-                  <h2>❓ How to Use This Website (مدد اور رہنمائی)</h2>
+                  <h2>How to use this website</h2>
                   <button
                     type="button"
                     className="btn-secondary-small"
                     onClick={() => setIsHelpOpen(false)}
                   >
-                    ✖ Close Help
+                    Close help
                   </button>
                 </div>
                 <div className="home-help-grid">
                   <div className="home-help-item">
-                    <strong>🟢 Start Practice Button</strong>
+                    <strong>Green Start button</strong>
                     <p>
                       Opens the machine simulator with helpful step-by-step hints.
                     </p>
@@ -284,7 +329,7 @@ export default function App() {
                     )}
                   </div>
                   <div className="home-help-item">
-                    <strong>📖 Learn Mode</strong>
+                    <strong>Explain first</strong>
                     <p>
                       Explains what every single button on the screen means before you touch it.
                     </p>
@@ -295,7 +340,7 @@ export default function App() {
                     )}
                   </div>
                   <div className="home-help-item">
-                    <strong>🔊 Listen Button</strong>
+                    <strong>Listen</strong>
                     <p>
                       Reads the instructions on the screen out loud using your device speaker.
                     </p>
@@ -306,7 +351,7 @@ export default function App() {
                     )}
                   </div>
                   <div className="home-help-item">
-                    <strong>🔍 Text Size & Language</strong>
+                    <strong>Bigger text and language</strong>
                     <p>
                       Use the top bar anytime to make letters Extra Large (A+) or switch between English and Urdu.
                     </p>
@@ -321,15 +366,17 @@ export default function App() {
             )}
 
             {/* Three Practice Machine Cards */}
-            <section className="machines-section" aria-label="Choose a practice machine">
+            <section
+              id="practice-machines"
+              className="machines-section"
+              aria-label="Choose a practice machine"
+            >
               <div className="section-heading-row">
-                {showEnglish && (
-                  <h2>Choose a Machine to Start Practicing:</h2>
-                )}
+                {showEnglish && <h2>Tap Start on one machine</h2>}
                 {showUrdu && (
-                  <h2 className="urdu-heading" lang="ur" dir="rtl">
-                    مشق شروع کرنے کے لیے کوئی ایک مشین منتخب کریں:
-                  </h2>
+                  <p className="urdu-heading" lang="ur" dir="rtl">
+                    ایک مشین پر شروع کریں دبائیں
+                  </p>
                 )}
               </div>
 
@@ -347,11 +394,8 @@ export default function App() {
 
             {/* Reassurance Footer Section */}
             <section className="safety-promise-card" aria-label="Safety promise">
-              <div className="safety-icon" aria-hidden="true">🛡️</div>
               <div>
-                {showEnglish && (
-                  <h3>Our Safety Promise to Learners</h3>
-                )}
+                {showEnglish && <h3>Nothing here is real</h3>}
                 {showEnglish && (
                   <p>
                     This website never asks for your name, phone number, bank account, or real card PIN. You cannot lose money or break anything here. Feel free to press every button, test what happens when you make a mistake, and practice as many times as you like!
@@ -412,9 +456,10 @@ export default function App() {
 
       <footer className="site-footer">
         <p>
-          <strong>Kiosk of Confidence</strong> — Practice first. Use technology independently. • 100% Simulated Educational Prototype (No real transactions).
+          Kiosk of Confidence. Practice only. No real money, cards, or personal details.
         </p>
       </footer>
+      </div>
     </div>
   )
 }

@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react'
 import ProgressBar from '../components/ProgressBar'
 import HelpPanel from '../components/HelpPanel'
+import Icon from '../components/Icons'
 
 const TICKET_STEPS = [
   { id: 'departure', label: 'Departure City', labelUrdu: 'روانگی کا شہر' },
@@ -29,7 +30,7 @@ const TICKET_TYPES = [
     usd: '$12',
     desc: 'Comfortable reserved seat',
     descUrdu: 'آرام دہ مخصوص نشست',
-    icon: '💺',
+    icon: 'seat',
   },
   {
     id: 'business',
@@ -39,7 +40,7 @@ const TICKET_TYPES = [
     usd: '$24',
     desc: 'Extra legroom + complimentary refreshments',
     descUrdu: 'کشادہ نشست اور ریفریشمنٹ',
-    icon: '✨',
+    icon: 'sparkle',
   },
   {
     id: 'senior',
@@ -49,7 +50,7 @@ const TICKET_TYPES = [
     usd: '$6',
     desc: 'Special half-price fare for ages 60+',
     descUrdu: '60 سال سے زائد عمر کے افراد کے لیے خصوصی رعایت',
-    icon: '🪪',
+    icon: 'idCard',
   },
 ]
 
@@ -74,8 +75,8 @@ export default function TicketMachine({
   const [correctedMistakeCount, setCorrectedMistakeCount] = useState(0)
   const [isStuckHintVisible, setIsStuckHintVisible] = useState(false)
 
-  const showEnglish = language === 'both' || language === 'en'
-  const showUrdu = language === 'both' || language === 'ur'
+  const showEnglish = language === 'en'
+  const showUrdu = language === 'ur'
 
   const singleTicketFare = ticketType.price * (isRoundTrip ? 2 : 1)
   const totalFare = singleTicketFare * passengerCount
@@ -243,9 +244,11 @@ export default function TicketMachine({
 
   useEffect(() => {
     if (onUpdateScreenSpeech) {
-      onUpdateScreenSpeech(
-        `Ticket Booking Simulator. ${currentGuide.title}. ${currentGuide.learnExplanation} Hint: ${currentGuide.hintText}`
-      )
+      onUpdateScreenSpeech({
+        en: `Ticket Booking Simulator. ${currentGuide.title}. ${currentGuide.learnExplanation} Hint: ${currentGuide.hintText}`,
+        ur: `ٹکٹ بکنگ مشق۔ ${currentGuide.titleUrdu}. ${currentGuide.learnExplanationUrdu} اشارہ: ${currentGuide.hintTextUrdu}`,
+        urAudio: `ticket-step-${stepIndex}`,
+      })
     }
     setIsStuckHintVisible(false)
     const timer = setTimeout(() => {
@@ -341,8 +344,11 @@ export default function TicketMachine({
         <section className="kiosk-machine-frame ticket-frame" aria-label="Simulated Ticket Booking Machine">
           <div className="kiosk-hardware-top">
             <div className="kiosk-bezel-title">
-              <span>🚆 NATIONAL RAIL & EXPRESS TICKET KIOSK (SIMULATOR)</span>
-              <span className="kiosk-slot-indicator">🎫 Practice Mode — No Real Payment</span>
+              <span>Practice ticket machine</span>
+              <span className="kiosk-slot-indicator">
+                <Icon name="ticket" size={16} />
+                Practice Mode — No Real Payment
+              </span>
             </div>
             {stepIndex > 0 && stepIndex < 5 && (
               <div className="live-route-strip">
@@ -396,7 +402,9 @@ export default function TicketMachine({
                       }`}
                       onClick={() => handleSelectDeparture(city)}
                     >
-                      <span className="btn-icon">🚉</span>
+                      <span className="btn-icon">
+                        <Icon name="station" size={28} />
+                      </span>
                       <div className="btn-text-block">
                         <strong>{city.name}</strong>
                         <span className="urdu-btn-text" lang="ur" dir="rtl">
@@ -441,7 +449,9 @@ export default function TicketMachine({
                         }`}
                         onClick={() => handleSelectDestination(city)}
                       >
-                        <span className="btn-icon">{isSameAsDeparture ? '⚠️' : '🏁'}</span>
+                        <span className="btn-icon">
+                          <Icon name={isSameAsDeparture ? 'warning' : 'destination'} size={28} />
+                        </span>
                         <div className="btn-text-block">
                           <strong>{city.name}</strong>
                           <span className="urdu-btn-text" lang="ur" dir="rtl">
@@ -540,7 +550,9 @@ export default function TicketMachine({
                           }
                         }}
                       >
-                        <span className="btn-icon">{type.icon}</span>
+                        <span className="btn-icon">
+                          <Icon name={type.icon} size={28} />
+                        </span>
                         <div className="btn-text-block">
                           <div className="ticket-type-header-line">
                             <strong>{type.name}</strong>
@@ -652,7 +664,9 @@ export default function TicketMachine({
                       setStepIndex(4)
                     }}
                   >
-                    <span className="btn-icon">➡️</span>
+                    <span className="btn-icon">
+                      <Icon name="oneWay" size={28} />
+                    </span>
                     <div className="btn-text-block">
                       {showEnglish && <strong>Review Booking Details</strong>}
                       {showUrdu && (
@@ -774,7 +788,9 @@ export default function TicketMachine({
                       setStepIndex(5)
                     }}
                   >
-                    <span className="btn-icon">🎫</span>
+                    <span className="btn-icon">
+                      <Icon name="ticket" size={28} />
+                    </span>
                     <div className="btn-text-block">
                       {showEnglish && <strong>Confirm & Print Simulated Ticket</strong>}
                       {showUrdu && (
@@ -809,7 +825,9 @@ export default function TicketMachine({
             {stepIndex === 5 && (
               <div className="kiosk-step-content">
                 <div className="success-banner">
-                  <span className="success-icon" aria-hidden="true">🎫</span>
+                  <span className="success-icon" aria-hidden="true">
+                    <Icon name="ticket" size={42} />
+                  </span>
                   <div>
                     {showEnglish && <h2>Simulated Ticket Booking Confirmed!</h2>}
                     {showUrdu && (
@@ -954,6 +972,7 @@ export default function TicketMachine({
           isStuckHintVisible={isStuckHintVisible}
           onShowStuckHint={() => setIsStuckHintVisible(true)}
           onSpeakText={onSpeakText}
+          urAudio={`ticket-step-${stepIndex}`}
         />
       </div>
     </div>

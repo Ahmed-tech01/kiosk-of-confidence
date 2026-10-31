@@ -24,9 +24,10 @@ export default function HelpPanel({
   isStuckHintVisible,
   onShowStuckHint,
   onSpeakText,
+  urAudio,
 }) {
-  const showEnglish = language === 'both' || language === 'en'
-  const showUrdu = language === 'both' || language === 'ur'
+  const showEnglish = language === 'en'
+  const showUrdu = language === 'ur'
 
   // In Learn Mode, everything is expanded automatically so the user learns what the screen does.
   // In Practice Mode, the step hint and mistake tip are visible, and the full button guide opens when Help is clicked.
@@ -40,9 +41,12 @@ export default function HelpPanel({
   const showButtonDictionary = learningMode === 'learn' || isHelpOpen
 
   const handleListenToHelp = () => {
-    const textToRead = `${screenTitle || ''}. ${learnExplanation || ''}. Next step hint: ${hintText || ''}`
     if (onSpeakText) {
-      onSpeakText(textToRead)
+      onSpeakText({
+        en: `${screenTitle || ''}. ${learnExplanation || ''}. Next step hint: ${hintText || ''}`,
+        ur: `${screenTitleUrdu || ''}. ${learnExplanationUrdu || ''}. اشارہ: ${hintTextUrdu || ''}`,
+        urAudio: urAudio || null,
+      })
     }
   }
 
@@ -51,15 +55,9 @@ export default function HelpPanel({
       {/* Top Status Header of the Help Panel */}
       <div className="help-panel-header">
         <div className="help-mode-badge">
-          {learningMode === 'learn' && (
-            <span>📖 Learn Mode: Screen Guide • اسکرین کی مکمل وضاحت</span>
-          )}
-          {learningMode === 'practice' && (
-            <span>🎯 Guided Practice: Step Coach • مرحلہ وار رہنمائی</span>
-          )}
-          {learningMode === 'independent' && (
-            <span>⭐ Independent Mode • خودکار مشق</span>
-          )}
+          {learningMode === 'learn' && <span>Explain first</span>}
+          {learningMode === 'practice' && <span>Practice with help</span>}
+          {learningMode === 'independent' && <span>Try on my own</span>}
         </div>
 
         <div className="help-panel-header-actions">
@@ -69,7 +67,12 @@ export default function HelpPanel({
             onClick={handleListenToHelp}
             title="Read this guidance aloud"
           >
-            🔊 Read Guide {showUrdu && <span lang="ur">• سنیں</span>}
+            Read this help
+            {showUrdu && (
+              <span className="btn-sub" lang="ur" dir="rtl">
+                سنیں
+              </span>
+            )}
           </button>
 
           <button
@@ -78,9 +81,14 @@ export default function HelpPanel({
             onClick={onToggleHelp}
             aria-expanded={showButtonDictionary}
           >
-            {showButtonDictionary
-              ? 'Hide Button Meanings • بٹنوں کی تفصیل چھپائیں'
-              : '❓ Explain Unfamiliar Buttons • بٹنوں کا مطلب جانیں'}
+            <span>
+              {showButtonDictionary ? 'Hide button meanings' : 'What do these buttons mean?'}
+              {showUrdu && (
+                <span className="btn-sub" lang="ur" dir="rtl">
+                  {showButtonDictionary ? 'چھپائیں' : 'بٹن کا مطلب'}
+                </span>
+              )}
+            </span>
           </button>
         </div>
       </div>
@@ -105,7 +113,12 @@ export default function HelpPanel({
             className="btn-stuck-hint"
             onClick={onShowStuckHint}
           >
-            💡 I&apos;m Stuck — Show Hint {showUrdu && <span lang="ur">• مجھے اشارہ دکھائیں</span>}
+            I&apos;m stuck. Show a hint.
+            {showUrdu && (
+              <span className="btn-sub" lang="ur" dir="rtl">
+                اشارہ دکھائیں
+              </span>
+            )}
           </button>
         </div>
       )}

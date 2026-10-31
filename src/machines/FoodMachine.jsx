@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react'
 import ProgressBar from '../components/ProgressBar'
 import HelpPanel from '../components/HelpPanel'
+import Icon from '../components/Icons'
 
 const FOOD_STEPS = [
   { id: 'dining', label: 'Eat In or Takeaway', labelUrdu: 'یہاں کھائیں یا پارسل' },
@@ -10,10 +11,10 @@ const FOOD_STEPS = [
 ]
 
 const CATEGORIES = [
-  { id: 'mains', name: 'Mains & Burgers', nameUrdu: 'برگر اور رول', icon: '🍔' },
-  { id: 'sides', name: 'Sides & Snacks', nameUrdu: 'سنیکس اور سلاد', icon: '🍟' },
-  { id: 'drinks', name: 'Drinks & Chai', nameUrdu: 'مشروبات اور چائے', icon: '☕' },
-  { id: 'sweets', name: 'Sweet Treats', nameUrdu: 'میٹھا', icon: '🍨' },
+  { id: 'mains', name: 'Mains & Burgers', nameUrdu: 'برگر اور رول', icon: 'burger' },
+  { id: 'sides', name: 'Sides & Snacks', nameUrdu: 'سنیکس اور سلاد', icon: 'fries' },
+  { id: 'drinks', name: 'Drinks & Chai', nameUrdu: 'مشروبات اور چائے', icon: 'drink' },
+  { id: 'sweets', name: 'Sweet Treats', nameUrdu: 'میٹھا', icon: 'dessert' },
 ]
 
 const MENU_ITEMS = [
@@ -23,7 +24,7 @@ const MENU_ITEMS = [
     name: 'Crispy Chicken Burger',
     nameUrdu: 'کرسپی چکن برگر',
     price: 550,
-    icon: '🍔',
+    icon: 'burger',
     desc: 'Tender chicken fillet with lettuce & mild sauce',
   },
   {
@@ -32,7 +33,7 @@ const MENU_ITEMS = [
     name: 'Seekh Kebab Paratha Roll',
     nameUrdu: 'سیخ کباب پراٹھا رول',
     price: 450,
-    icon: '🌯',
+    icon: 'takeaway',
     desc: 'Freshly grilled kebab wrapped in warm paratha',
   },
   {
@@ -41,7 +42,7 @@ const MENU_ITEMS = [
     name: 'Grilled Club Sandwich',
     nameUrdu: 'گرلڈ کلب سینڈوچ',
     price: 500,
-    icon: '🥪',
+    icon: 'food',
     desc: 'Toasted three-layer sandwich with veggies',
   },
   {
@@ -50,7 +51,7 @@ const MENU_ITEMS = [
     name: 'Regular French Fries',
     nameUrdu: 'فرینچ فرائز (چپس)',
     price: 250,
-    icon: '🍟',
+    icon: 'fries',
     desc: 'Warm, lightly salted crispy potato fries',
   },
   {
@@ -59,7 +60,7 @@ const MENU_ITEMS = [
     name: 'Fresh Garden Salad Bowl',
     nameUrdu: 'تازہ سلاد باؤل',
     price: 300,
-    icon: '🥗',
+    icon: 'sparkle',
     desc: 'Cucumbers, tomatoes, lettuce & lemon dressing',
   },
   {
@@ -68,7 +69,7 @@ const MENU_ITEMS = [
     name: 'Sweet Buttered Corn Cup',
     nameUrdu: 'مکھن اور مکئی کا کپ',
     price: 200,
-    icon: '🌽',
+    icon: 'fries',
     desc: 'Steamed sweet corn with butter and mild spice',
   },
   {
@@ -77,7 +78,7 @@ const MENU_ITEMS = [
     name: 'Cardamom Karak Chai',
     nameUrdu: 'الائچی والی کڑک چائے',
     price: 180,
-    icon: '☕',
+    icon: 'drink',
     desc: 'Hot traditional milk tea with cardamom',
   },
   {
@@ -86,7 +87,7 @@ const MENU_ITEMS = [
     name: 'Fresh Mint Lemonade',
     nameUrdu: 'پودینے اور لیموں کا شربت',
     price: 220,
-    icon: '🥤',
+    icon: 'drink',
     desc: 'Refreshing chilled mint and lemon drink',
   },
   {
@@ -95,7 +96,7 @@ const MENU_ITEMS = [
     name: 'Mineral Water (500ml)',
     nameUrdu: 'منرل واٹر (پانی کی بوتل)',
     price: 100,
-    icon: '💧',
+    icon: 'drink',
     desc: 'Chilled atau room-temperature bottled water',
   },
   {
@@ -104,7 +105,7 @@ const MENU_ITEMS = [
     name: 'Warm Gulab Jamun (2 Pcs)',
     nameUrdu: 'گرم گلاب جامن (2 عدد)',
     price: 250,
-    icon: '🍯',
+    icon: 'dessert',
     desc: 'Traditional sweet dumplings in rose syrup',
   },
   {
@@ -113,7 +114,7 @@ const MENU_ITEMS = [
     name: 'Vanilla Soft-Serve Ice Cream',
     nameUrdu: 'ونیلا آئس کریم',
     price: 200,
-    icon: '🍦',
+    icon: 'dessert',
     desc: 'Creamy vanilla swirl in a crispy waffle cone',
   },
 ]
@@ -136,8 +137,8 @@ export default function FoodMachine({
   const [correctedMistakeCount, setCorrectedMistakeCount] = useState(0)
   const [isStuckHintVisible, setIsStuckHintVisible] = useState(false)
 
-  const showEnglish = language === 'both' || language === 'en'
-  const showUrdu = language === 'both' || language === 'ur'
+  const showEnglish = language === 'en'
+  const showUrdu = language === 'ur'
 
   const totalItemsCount = cart.reduce((sum, entry) => sum + entry.quantity, 0)
   const totalPrice = cart.reduce((sum, entry) => sum + entry.item.price * entry.quantity, 0)
@@ -264,9 +265,11 @@ export default function FoodMachine({
 
   useEffect(() => {
     if (onUpdateScreenSpeech) {
-      onUpdateScreenSpeech(
-        `Food Ordering Kiosk. ${currentGuide.title}. ${currentGuide.learnExplanation} Hint: ${currentGuide.hintText}`
-      )
+      onUpdateScreenSpeech({
+        en: `Food Ordering Kiosk. ${currentGuide.title}. ${currentGuide.learnExplanation} Hint: ${currentGuide.hintText}`,
+        ur: `کھانا آرڈر مشق۔ ${currentGuide.titleUrdu}. ${currentGuide.learnExplanationUrdu} اشارہ: ${currentGuide.hintTextUrdu}`,
+        urAudio: `food-step-${stepIndex}`,
+      })
     }
     setIsStuckHintVisible(false)
     const timer = setTimeout(() => {
@@ -381,9 +384,10 @@ export default function FoodMachine({
         <section className="kiosk-machine-frame food-frame" aria-label="Simulated Food Ordering Kiosk">
           <div className="kiosk-hardware-top">
             <div className="kiosk-bezel-title">
-              <span>🍔 SUNSHINE CAFE SELF-ORDER KIOSK (SIMULATOR)</span>
+              <span>Practice food order</span>
               <span className="kiosk-slot-indicator">
-                🛒 Tray: {totalItemsCount} {totalItemsCount === 1 ? 'Item' : 'Items'} (Rs.{' '}
+                <Icon name="cart" size={16} />
+                Tray: {totalItemsCount} {totalItemsCount === 1 ? 'Item' : 'Items'} (Rs.{' '}
                 {totalPrice.toLocaleString()})
               </span>
             </div>
@@ -405,7 +409,9 @@ export default function FoodMachine({
             {stepIndex === 0 && (
               <div className="kiosk-step-content">
                 <div className="kiosk-welcome-hero">
-                  <span className="hero-big-icon" aria-hidden="true">🍽️</span>
+                  <span className="hero-big-icon" aria-hidden="true">
+                    <Icon name="dine" size={52} />
+                  </span>
                   {showEnglish && <h2>Welcome! Where Will You Be Eating Today?</h2>}
                   {showUrdu && (
                     <h3 className="urdu-heading" lang="ur" dir="rtl">
@@ -429,7 +435,9 @@ export default function FoodMachine({
                       setStepIndex(1)
                     }}
                   >
-                    <span className="btn-icon">🍽️</span>
+                    <span className="btn-icon">
+                      <Icon name="dine" size={28} />
+                    </span>
                     <div className="btn-text-block">
                       {showEnglish && <strong>Eat In (Dine Here)</strong>}
                       {showEnglish && <small>Served on a tray for our tables</small>}
@@ -450,7 +458,9 @@ export default function FoodMachine({
                       setStepIndex(1)
                     }}
                   >
-                    <span className="btn-icon">🛍️</span>
+                    <span className="btn-icon">
+                      <Icon name="takeaway" size={28} />
+                    </span>
                     <div className="btn-text-block">
                       {showEnglish && <strong>Takeaway (Parcel)</strong>}
                       {showEnglish && <small>Packed in a bag to take home</small>}
@@ -499,7 +509,9 @@ export default function FoodMachine({
                       className={`category-tab-btn ${activeCategory === cat.id ? 'active' : ''}`}
                       onClick={() => setActiveCategory(cat.id)}
                     >
-                      <span className="cat-icon">{cat.icon}</span>
+                      <span className="cat-icon">
+                        <Icon name={cat.icon} size={22} />
+                      </span>
                       <div>
                         {showEnglish && <strong>{cat.name}</strong>}
                         {showUrdu && (
@@ -519,7 +531,9 @@ export default function FoodMachine({
                     return (
                       <div key={item.id} className="food-item-card">
                         <div className="food-item-header">
-                          <span className="food-emoji" aria-hidden="true">{item.icon}</span>
+                          <span className="food-emoji" aria-hidden="true">
+                            <Icon name={item.icon} size={28} />
+                          </span>
                           <span className="food-price-tag">Rs. {item.price}</span>
                         </div>
                         <div className="food-item-body">
@@ -609,7 +623,9 @@ export default function FoodMachine({
                       {cart.map(({ item, quantity }) => (
                         <li key={item.id} className="tray-item-row">
                           <div className="tray-item-info">
-                            <span className="tray-item-icon">{item.icon}</span>
+                            <span className="tray-item-icon">
+                              <Icon name={item.icon} size={24} />
+                            </span>
                             <div>
                               <strong>{item.name}</strong>{' '}
                               {showUrdu && (
@@ -661,7 +677,9 @@ export default function FoodMachine({
                       className="kiosk-action-btn primary-green confirm-large"
                       onClick={handleProceedToReview}
                     >
-                      <span className="btn-icon">🛒</span>
+                      <span className="btn-icon">
+                        <Icon name="cart" size={28} />
+                      </span>
                       <div className="btn-text-block">
                         {showEnglish && (
                           <strong>
@@ -745,7 +763,9 @@ export default function FoodMachine({
                       {cart.map(({ item, quantity }) => (
                         <li key={item.id} className="tray-item-row">
                           <div className="tray-item-info">
-                            <span className="tray-item-icon">{item.icon}</span>
+                            <span className="tray-item-icon">
+                              <Icon name={item.icon} size={24} />
+                            </span>
                             <div>
                               <strong>{item.name}</strong>{' '}
                               {showUrdu && (
@@ -815,7 +835,9 @@ export default function FoodMachine({
                         setStepIndex(3)
                       }}
                     >
-                      <span className="btn-icon">✅</span>
+                      <span className="btn-icon">
+                        <Icon name="check" size={28} />
+                      </span>
                       <div className="btn-text-block">
                         {showEnglish && (
                           <strong>
@@ -855,7 +877,9 @@ export default function FoodMachine({
             {stepIndex === 3 && (
               <div className="kiosk-step-content">
                 <div className="success-banner">
-                  <span className="success-icon" aria-hidden="true">🍔</span>
+                  <span className="success-icon" aria-hidden="true">
+                    <Icon name="food" size={42} />
+                  </span>
                   <div>
                     {showEnglish && <h2>Simulated Order Sent to Kitchen!</h2>}
                     {showUrdu && (
@@ -987,6 +1011,7 @@ export default function FoodMachine({
           isStuckHintVisible={isStuckHintVisible}
           onShowStuckHint={() => setIsStuckHintVisible(true)}
           onSpeakText={onSpeakText}
+          urAudio={`food-step-${stepIndex}`}
         />
       </div>
     </div>

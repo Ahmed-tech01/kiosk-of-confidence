@@ -1,102 +1,93 @@
 import React from 'react'
+import Icon from './Icons'
 
 /**
- * MachineCard displays a large, accessible card on the Home page for each
- * practice simulator (ATM, Ticket Booking, Food Ordering).
+ * Large home-screen choice for one practice machine.
+ * Photo background + professional icon, with one green Start button.
  */
-export default function MachineCard({
-  machine,
-  language,
-  onStartMachine,
-}) {
-  const showEnglish = language === 'both' || language === 'en'
-  const showUrdu = language === 'both' || language === 'ur'
+export default function MachineCard({ machine, language, onStartMachine }) {
+  const showEnglish = language === 'en'
+  const showUrdu = language === 'ur'
 
   return (
-    <article className={`machine-card machine-card-${machine.id}`}>
-      <div className="machine-card-top">
-        <div className="machine-icon-badge" aria-hidden="true">
-          <span className="machine-emoji">{machine.icon}</span>
+    <article
+      className={`machine-card machine-card-${machine.id}`}
+      style={{ '--machine-photo': `url(${machine.image})` }}
+    >
+      <div className="machine-card-media" aria-hidden="true">
+        <div className="machine-icon-badge">
+          <Icon name={machine.icon} size={34} />
         </div>
-        <span className="machine-tag">{machine.badge}</span>
       </div>
 
       <div className="machine-card-body">
-        {showEnglish && <h2 className="machine-card-title">{machine.title}</h2>}
-        {showUrdu && (
-          <h3 className="machine-card-title-urdu" lang="ur" dir="rtl">
-            {machine.titleUrdu}
-          </h3>
-        )}
+        <div className="machine-card-top">
+          <div>
+            {showEnglish && <h2 className="machine-card-title">{machine.title}</h2>}
+            {showUrdu && (
+              <p className="machine-card-title-urdu" lang="ur" dir="rtl">
+                {machine.titleUrdu}
+              </p>
+            )}
+          </div>
+        </div>
 
-        {showEnglish && (
-          <p className="machine-card-description">{machine.description}</p>
-        )}
+        {showEnglish && <p className="machine-card-description">{machine.description}</p>}
         {showUrdu && (
           <p className="machine-card-description-urdu" lang="ur" dir="rtl">
             {machine.descriptionUrdu}
           </p>
         )}
 
-        <div className="machine-skills-box">
-          {showEnglish && (
-            <p className="skills-heading">What you will practice:</p>
-          )}
-          {showUrdu && (
-            <p className="skills-heading-urdu" lang="ur" dir="rtl">
-              آپ کیا سیکھیں گے:
-            </p>
-          )}
-          <ul className="machine-skills-list">
-            {machine.skills.map((skill, index) => (
-              <li key={index} className="machine-skill-item">
-                <span className="skill-check" aria-hidden="true">✓</span>
-                <div>
-                  {showEnglish && <span>{skill.en}</span>}
-                  {showUrdu && (
-                    <span className="urdu-skill-line" lang="ur" dir="rtl">
-                      {skill.ur}
-                    </span>
-                  )}
-                </div>
-              </li>
-            ))}
-          </ul>
-        </div>
-      </div>
-
-      <div className="machine-card-actions">
-        <button
-          type="button"
-          className="btn-primary start-practice-btn"
-          onClick={() => onStartMachine(machine.id, 'practice')}
-        >
-          <span>Start Practice</span>
-          {showUrdu && (
-            <span className="btn-urdu-sub" lang="ur" dir="rtl">
-              مشق شروع کریں ←
-            </span>
-          )}
-        </button>
-
-        <div className="secondary-mode-links">
+        <div className="machine-card-actions">
           <button
             type="button"
-            className="btn-secondary-small"
-            onClick={() => onStartMachine(machine.id, 'learn')}
+            className="start-practice-btn"
+            onClick={() => onStartMachine(machine.id, 'practice')}
           >
-            📖 Start in Learn Mode {showUrdu && <span lang="ur">• پہلے سیکھیں</span>}
+            <span>Start</span>
+            {showUrdu && (
+              <span className="btn-urdu-sub" lang="ur" dir="rtl">
+                شروع کریں
+              </span>
+            )}
           </button>
-          <button
-            type="button"
-            className="btn-secondary-small"
-            onClick={() => onStartMachine(machine.id, 'independent')}
-          >
-            ⭐ Try Without Hints {showUrdu && <span lang="ur">• خودکار مشق</span>}
-          </button>
+          <div className="secondary-mode-links">
+            <button
+              type="button"
+              className="btn-secondary-small"
+              onClick={() => onStartMachine(machine.id, 'learn')}
+            >
+              Explain first
+            </button>
+            <button
+              type="button"
+              className="btn-secondary-small"
+              onClick={() => onStartMachine(machine.id, 'independent')}
+            >
+              Fewer hints
+            </button>
+          </div>
         </div>
+
+        <ul className="machine-skills-list">
+          {machine.skills.map((skill, index) => (
+            <li key={index} className="machine-skill-item">
+              <span className="skill-check" aria-hidden="true">
+                {index + 1}
+              </span>
+              <div>
+                {showEnglish && <span>{skill.en}</span>}
+                {showUrdu && (
+                  <span className="urdu-skill-line" lang="ur" dir="rtl">
+                    {skill.ur}
+                  </span>
+                )}
+              </div>
+            </li>
+          ))}
+        </ul>
       </div>
     </article>
   )
 }
-

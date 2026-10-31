@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react'
 import ProgressBar from '../components/ProgressBar'
 import HelpPanel from '../components/HelpPanel'
+import Icon from '../components/Icons'
 
 const ATM_STEPS = [
   { id: 'welcome', label: 'Welcome', labelUrdu: 'خوش آمدید' },
@@ -48,8 +49,8 @@ export default function ATM({
   const [cardTakenBack, setCardTakenBack] = useState(false)
   const [isStuckHintVisible, setIsStuckHintVisible] = useState(false)
 
-  const showEnglish = language === 'both' || language === 'en'
-  const showUrdu = language === 'both' || language === 'ur'
+  const showEnglish = language === 'en'
+  const showUrdu = language === 'ur'
 
   // Contextual screen explanations & hints per step
   const stepGuideData = [
@@ -218,9 +219,11 @@ export default function ATM({
   // Keep parent speech text updated whenever step changes
   useEffect(() => {
     if (onUpdateScreenSpeech) {
-      onUpdateScreenSpeech(
-        `ATM Simulator. ${currentGuide.title}. ${currentGuide.learnExplanation} Hint: ${currentGuide.hintText}`
-      )
+      onUpdateScreenSpeech({
+        en: `ATM Simulator. ${currentGuide.title}. ${currentGuide.learnExplanation} Hint: ${currentGuide.hintText}`,
+        ur: `اے ٹی ایم مشق۔ ${currentGuide.titleUrdu}. ${currentGuide.learnExplanationUrdu} اشارہ: ${currentGuide.hintTextUrdu}`,
+        urAudio: `atm-step-${stepIndex}`,
+      })
     }
     setIsStuckHintVisible(false)
     const timer = setTimeout(() => {
@@ -381,13 +384,23 @@ export default function ATM({
         <section className="kiosk-machine-frame atm-frame" aria-label="Simulated ATM Screen">
           <div className="kiosk-hardware-top">
             <div className="kiosk-bezel-title">
-              <span>🏦 CONFIDENCE BANK ATM (SIMULATOR)</span>
+              <span>Practice ATM</span>
               <span className="kiosk-slot-indicator">
-                {stepIndex === 0 ? '🟢 Card Slot Ready' : '💳 Demo Card Inside'}
+                {stepIndex === 0 ? (
+                  <>
+                    <span className="status-dot ready" aria-hidden="true" />
+                    Card Slot Ready
+                  </>
+                ) : (
+                  <>
+                    <Icon name="card" size={16} />
+                    Demo Card Inside
+                  </>
+                )}
               </span>
             </div>
             <div className="security-reassurance-strip">
-              🔒 Never enter a real card number or real PIN. Everything here uses pretend demo numbers.
+              No real card. No real PIN.
             </div>
           </div>
 
@@ -408,7 +421,9 @@ export default function ATM({
             {stepIndex === 0 && (
               <div className="kiosk-step-content">
                 <div className="kiosk-welcome-hero">
-                  <span className="hero-big-icon" aria-hidden="true">🏧</span>
+                  <span className="hero-big-icon" aria-hidden="true">
+                    <Icon name="atm" size={52} />
+                  </span>
                   {showEnglish && <h2>Welcome to the Practice ATM</h2>}
                   {showUrdu && (
                     <h3 className="urdu-heading" lang="ur" dir="rtl">
@@ -433,7 +448,9 @@ export default function ATM({
                     className="kiosk-action-btn primary-green"
                     onClick={handleInsertCardRightWay}
                   >
-                    <span className="btn-icon">💳</span>
+                    <span className="btn-icon">
+                      <Icon name="card" size={28} />
+                    </span>
                     <div className="btn-text-block">
                       {showEnglish && <strong>Insert Practice Card (Begin)</strong>}
                       {showUrdu && (
@@ -449,7 +466,9 @@ export default function ATM({
                     className="kiosk-action-btn warning-outline"
                     onClick={handleInsertCardWrongWay}
                   >
-                    <span className="btn-icon">🔄</span>
+                    <span className="btn-icon">
+                      <Icon name="refresh" size={28} />
+                    </span>
                     <div className="btn-text-block">
                       {showEnglish && (
                         <strong>Test Mistake: What if I insert my card the wrong way?</strong>
@@ -491,7 +510,9 @@ export default function ATM({
                     className="kiosk-action-btn primary-blue"
                     onClick={() => handleSelectService('withdrawal')}
                   >
-                    <span className="btn-icon">💵</span>
+                    <span className="btn-icon">
+                      <Icon name="cash" size={28} />
+                    </span>
                     <div className="btn-text-block">
                       {showEnglish && <strong>Cash Withdrawal</strong>}
                       {showEnglish && <small>Take out pretend cash</small>}
@@ -508,7 +529,9 @@ export default function ATM({
                     className="kiosk-action-btn primary-teal"
                     onClick={() => handleSelectService('balance')}
                   >
-                    <span className="btn-icon">📊</span>
+                    <span className="btn-icon">
+                      <Icon name="chart" size={28} />
+                    </span>
                     <div className="btn-text-block">
                       {showEnglish && <strong>Balance Inquiry</strong>}
                       {showEnglish && <small>Check available pretend balance</small>}
@@ -786,7 +809,9 @@ export default function ATM({
                       setStepIndex(4)
                     }}
                   >
-                    <span className="btn-icon">✅</span>
+                    <span className="btn-icon">
+                      <Icon name="check" size={28} />
+                    </span>
                     <div className="btn-text-block">
                       {showEnglish && (
                         <strong>
@@ -827,7 +852,9 @@ export default function ATM({
             {stepIndex === 4 && (
               <div className="kiosk-step-content">
                 <div className="success-banner">
-                  <span className="success-icon" aria-hidden="true">🎉</span>
+                  <span className="success-icon" aria-hidden="true">
+                    <Icon name="success" size={42} />
+                  </span>
                   <div>
                     {showEnglish && <h2>Simulated Transaction Complete!</h2>}
                     {showUrdu && (
@@ -1001,6 +1028,7 @@ export default function ATM({
           isStuckHintVisible={isStuckHintVisible}
           onShowStuckHint={() => setIsStuckHintVisible(true)}
           onSpeakText={onSpeakText}
+          urAudio={`atm-step-${stepIndex}`}
         />
       </div>
     </div>
